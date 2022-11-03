@@ -9,7 +9,8 @@
 \usepackage[exponent-product = \cdot]{siunitx}
 \usepackage{rotating}
 \usepackage{helvet}
-\usepackage{lastpage}
+\usepackage[pagecontinue=false]{pageslts}
+\pagenumbering{arabic}
 \usepackage{scrlayer-scrpage}
 \usepackage{eurosym}
 \usepackage{fp}
@@ -23,14 +24,52 @@
 \pgfplotsset{compat=newest}
 
 \usepackage[backend = biber,
-    style = alphabetic,%numeric
+    style = numeric, %alphabetic, numeric
     firstinits = true,
     natbib = true,
+	url=false,
+	doi=true,
+	eprint=true,
+	isbn=false,
+	defernumbers=true,
+	labelnumber,
     hyperref = true,
-    maxbibnames = 10%,
-    %sorting=none,%remove this to have things sorted, e.g. use style=alphabetic
+    maxbibnames = 10,
+    sorting=none,%remove this to have things sorted, e.g. use style=alphabetic
     ]{biblatex}
 \renewcommand*{\labelalphaothers}{}
+
+% bibliography (from dfgproposal.cls from https://github.com/klb2/dfg-proposal-template)
+\DeclareFieldFormat{labelnumberwidth}{\mkbibbrackets{#1}}
+\renewbibmacro*{cite}{%
+	\printtext[bibhyperref]{%
+		\printfield{labelprefix}%
+		\ifcategory{reviewed}
+		{\printfield{labelnumber}}
+		{%
+		 \ifcategory{nonreviewed}
+		 {\printfield{labelnumber}}
+		 {%
+            \printfield{labelnumber}%
+            \printfield{extraalpha}}}}}
+            % Here I changed the labelalpha to labelnumber which is generally preferrable I think... who wants this ugly abbreviations of author names and year of publication
+            %\printfield{labelalpha}%
+			%\printfield{extraalpha}}}}}
+
+\defbibenvironment{bibliographyNUM}
+{\list
+	{\printtext[labelnumberwidth]{%
+			\printfield{labelprefix}%
+			\printfield{labelnumber}}}
+	{\setlength{\labelwidth}{\labelnumberwidth}%
+		\setlength{\leftmargin}{\labelwidth}%
+		\setlength{\labelsep}{\biblabelsep}%
+		\addtolength{\leftmargin}{\labelsep}%
+		\setlength{\itemsep}{\bibitemsep}%
+		\setlength{\parsep}{\bibparsep}}%
+	\renewcommand*{\makelabel}[1]{\hss##1}}
+{\endlist}
+{\item}
 
 %% von Hurenkindern und Schusterjungen
 \clubpenalty = 10000
@@ -45,17 +84,20 @@
 \hyphenpenalty 3000
 \doublehyphendemerits 50000000
 
+
 \newcommand{\total}{}
+
+\newcommand{\pagenumtype}{arabic}
 \DeclareOption{german}{
     \sisetup{locale=DE}
     \AtBeginDocument{\selectlanguage{ngerman}}
-    \renewcommand{\pagemark}{Seite \thepage~von \pageref{LastPage}}
+    \renewcommand{\pagemark}{Seite \thepage~von \lastpageref{pagesLTS.\pagenumtype}}
     \renewcommand{\total}{Summe}
 }
 \DeclareOption{english}{
     \sisetup{locale=US}
     \AtBeginDocument{\selectlanguage{english}}
-	\renewcommand{\pagemark}{page \thepage~of \pageref{LastPage}}
+	\renewcommand{\pagemark}{page \thepage~of \lastpageref{pagesLTS.\pagenumtype}}
     \renewcommand{\total}{Total}
 }
 \ExecuteOptions{german}
@@ -63,6 +105,13 @@
 \ohead*{\pagemark}
 \cfoot*{}
 \chead{}
+
+\newcommand{\backmatter}{
+    \clearpage
+    \pagenumbering{Roman}
+    \renewcommand{\pagenumtype}{Roman}
+}
+
 
 \KOMAoptions{paper=a4}
 \KOMAoption{fontsize}{11pt}
@@ -93,16 +142,5 @@
 \newcommand{\positionmul}[3]{\par #1 \hfill \num{#3} $\times$ \num[round-mode = places, round-precision = 2]{#2}\,\euro \FPeval{\funds}{\funds + #3*#2}}
 
 % todonotes and a switch for final
-
 \usepackage{ifthen}
 \newboolean{finalcompile}
-
-
-\ifthenelse{\boolean{finalcompile}}{
-\usepackage[disable]{todonotes}
-\usepackage[final]{showlabels}
-}{
-\usepackage{todonotes}
-\newcommand{\todonote}[2][]{\tikzexternaldisable\todo[#1]{#2}\tikzexternalenable} %needed for externalization
-\usepackage{showlabels}
-}
